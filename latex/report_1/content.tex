@@ -1,0 +1,15 @@
+\begin{abstract}
+	Bla
+\end{abstract}
+
+\section{Introduction}
+In recent years, deep neural networks (DNN) have achieved great success for pattern recognition and computer vision, leading to important progress in a variety of tasks, like classification, detection, segmentation and so on. Despite this success, DNNs still suffer from some serious problems like long training time. One of the reason is that most of the current learning methods do not consider ordering of the training examples of the leaning and randomly sample the training data. Another problem for most DNNs is handling unseen training data. In our proposal we want to outline how we could tackle each of these problem separately and propose two possible research directions.
+
+Our model we plan to implement will map the input of our network to a low-dimensional embedding space. With the help of all training examples we can approximate the 
+mean and the variance for a given class in the embedded space. In the beginning of the training, all these Gaussian distributions have high-overlap. As our training progresses we will dis-entangle all classes resulting in an nicely separated distributions in the embedded space [Paper from the Chinese guys].
+
+In this setup the previous mentioned problems about training time and unseen classes can be interpreted as followed.
+First, as during training the examples are sampled uniformly/randomly we might improve on classes that are already well separated. To overcome this problem we want to use the overlap to prioritize classes for the next batch.
+Second, unseen classes should be detected as out-of-distribution for all approximated Gaussians and in the best case form a Gaussian distribution by themselves in the embedded space.
+
+sfd
