@@ -105,7 +105,6 @@ We hope we are able to correctly detect and cluster new examples which are drawn
 \section{Baseline Implementation}
 
 As our baseline implementation we plan to build a very small network consisting of the following parts: Use a feature extractor (like ResNet, VGGNet) combined with a embedding space encoder. Using this encoded vector, we can measure the priority based on the correlation between classes. 
-Therefore, the model is able to build the reasonable order of training schedule by choosing the training data based on the priority. 
+Therefore, the model is able to build the reasonable order of training schedule by choosing the training data based on the priority. Or in the second research direction of finding out-of-distribution examples we can threshold the detection in a similar way as done in \cite{yang2018robust}.
 
-We might borrow the structure of the network and the loss calculation from [Prototypical Networks for Few-shot Learning] or [Neural Statistician]
-Protorypical Learning in General: https://icml.cc/2012/papers/389.pdf
+We might borrow the structure of the network and the loss calculation from \cite{edwards2016towards} or \cite{snell2017prototypical}.
