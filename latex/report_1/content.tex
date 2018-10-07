@@ -1,15 +1,111 @@
 \begin{abstract}
-	Bla
+	We propose two ideas we want to further investigate in the area of leveraging an embedded space for neural networks. First, we eventually speed up the training of a neural network which maps samples into an embedded space by selecting training classes on which the network performs poorly. Second, we want to use the embedded space to discover and cluster out-of-distribution examples (in this case unseen classes during training). Both ideas sound equally appealing to us, so we explain both in a brief manner in this proposal.
 \end{abstract}
 
 \section{Introduction}
-In recent years, deep neural networks (DNN) have achieved great success for pattern recognition and computer vision, leading to important progress in a variety of tasks, like classification, detection, segmentation and so on. Despite this success, DNNs still suffer from some serious problems like long training time. One of the reason is that most of the current learning methods do not consider ordering of the training examples of the leaning and randomly sample the training data. Another problem for most DNNs is handling unseen training data. In our proposal we want to outline how we could tackle each of these problem separately and propose two possible research directions.
+In recent years, deep neural networks (DNN) have achieved great success for pattern recognition and computer vision, leading to important progress in a variety of tasks, like classification, detection, segmentation and so on. Despite this success, DNNs still suffer from some serious problems like long training time. One of the reason is that most of the current learning methods do not consider ordering of the training examples of the leaning and randomly sample the training data. 
 
-Our model we plan to implement will map the input of our network to a low-dimensional embedding space. With the help of all training examples we can approximate the 
-mean and the variance for a given class in the embedded space. In the beginning of the training, all these Gaussian distributions have high-overlap. As our training progresses we will dis-entangle all classes resulting in an nicely separated distributions in the embedded space [Paper from the Chinese guys].
+Another problem for most DNNs is handling unseen training data. In our proposal we want to outline how we could tackle each of these problem separately and propose two possible research directions.
+
+Our model we plan to implement will map the input of our network to a low-dimensional embedding space. With the help of all training examples we can approximate the mean and the variance of a Gaussian distribution for a given class in the embedded space. In the beginning of the training, all these Gaussian distributions have high-overlap. As our training progresses we will dis-entangle all classes resulting in nicely separated distributions in the embedded space. Similar results were achieved by \cite{yang2018robust}.
 
 In this setup the previous mentioned problems about training time and unseen classes can be interpreted as followed.
-First, as during training the examples are sampled uniformly/randomly we might improve on classes that are already well separated. To overcome this problem we want to use the overlap to prioritize classes for the next batch.
-Second, unseen classes should be detected as out-of-distribution for all approximated Gaussians and in the best case form a Gaussian distribution by themselves in the embedded space.
+First, as during training the examples are sampled uniformly/randomly we might improve on classes that are already well separated. To overcome this problem we want to use the overlap to prioritize classes for the next batch
+Second, unseen classes should be detected as out-of-distribution for all approximated Gaussian distributions and in the best case are Gaussian distribution in the embedded space.
 
-sfd
+\section{Research Direction 1: Ordering}
+For the previous explained model the selection of the next training example is in no particular order. While curriculum learning is a trend in machine learning, it focuses more on training the network in a hierarchical way. In our case we have no information about a hierarchy in the training data, so we can not leverage this knowledge (see \cite{bengio2009curriculum} and \cite{graves2017automated}).
+
+Instead, we suggest a way to build the rational curriculum that only contains the necessary problems that should be improved. In this way, the model can avoid wasting it’s time to learn the problem that already solve well.
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.0\linewidth]{../figures/non_orderd_vs_ordered_learning}
+		\caption{On the left side we show the non-ordered training. It might happen that due to the random selection the model is trained on some irrelevant parts of the problem. If we make sure we only feed training examples to the model that cover relevant parts of the problem we can reach converge faster.}
+		\label{fig:nonorderdvsorderedlearning}
+	\end{subfigure}%
+	~
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=1.0\linewidth]{../figures/optimizing_overlapping_classes}
+		\caption{If the model is trained on a batch with the data from class 2, 3 and 4 as seen in the figure, the training loss will be small because those classes are already well clustered and separated. In this situation, the model should focus on the class 1 and 2 to solve the problem.}
+		\label{fig:optimizingoverlappingclasses}
+	\end{subfigure}
+\end{figure}
+
+\subsection{Problem definition}
+Briefly, in the beginning of every episode a subset of all possible classes is uniformly/randomly sampled. For this particular episode the subset is now in the main focus during training.
+
+As normally the sampling is done uniformly, it is not always guaranteed that the sampled classes in the subset give sufficient information to improve the model further. 
+
+To overcome this problem we want to modify the uniform sampling by assigning an unique probability to each possible class. The main contribution of our work will be to define a sufficient heuristic or to find a stochastic approach to ensure the networks focus on the not so well explainable parts by assigning a higher selection probability to these classes.
+In figure \ref{fig:nonorderdvsorderedlearning} one can see the impact of using an problem specific sampling instead of doing random sampling.
+
+\subsection{Approach}
+Right now, we plan to construct a square matrix of all classes. The matrix should correctly represent the overlap between classes. Therefore one possibility would be that each entry of the matrix will be the Jensen-Shannon-Divergence between these two class sets in the embedded space. We then continue to calculate a probability either for each class or for each inter-class relationship.
+
+By sampling the classes/relationships with a higher probability we ensure that the loss in the upcoming episode reflects the high overlap for these classes and the network improves on these class sets. To further ensure that non-focused classes do not get worse we keep the concept of the context classes.
+
+As this a fairly popular sampling problem, we could not choose this simple probabilistic sampling but use a more sophisticated method such as tournament selection.
+
+We could also choose to use KL-divergence instead of Jensen-Shannon-Divergence, so we can save computational power.
+
+From our current point-of-view either class or relationship sampling is possible and investigating which one works better could be one of our possible research questions we want to solve. In the following we will briefly explain the difference between them.
+
+\subsubsection{Sampling classes}
+To ensure a proper distribution, we will sum up the entries of each row/column. As the ultimate goal is to separate the class sets as much as possible we need to take the inverse of the sum because a higher divergence indicates a better separation. Finally, to get a proper distribution we need to normalize the values.
+
+\subsubsection{Sampling relationships}
+A different possibility would be not to sample the classes but rather directly the entries in the matrix. This shifts the sampling problem from classes to relationship between classes. In this case our sampling process needs to be able to handle already sampled classes through a previous sampled relationship as well as re-weighting the relationship in the matrix whenever a new class was sampled. 
+
+\subsection{Expected results}
+We hope we can reduce the training time of the neural network as we draw more attention towards the classes with low separation/high overlap. During the training process the network will focus on these classes and moves them apart (in the embedded space).
+
+\section{Research Direction 2: Clustering new classes}
+Assume we have trained our embedding model only on $S$ classes of the training set from a total of $N$ classes in the data set. If we now feed the rest 
+\begin{equation*}
+	U = N - S
+\end{equation*} 
+classes to the model, the model should have learned a mapping in the embedded space which places the unseen classes in a way that they do not collide with each other. This problem is similar to few-shot learning (\cite{edwards2016towards}, \cite{snell2017prototypical}) and incremental learning (\cite{lee2018simple}, \cite{yang2018robust}). 
+
+\subsection{Objectives}
+Our goal here is that we now do not know how many $U$ unseen classes are there and try to 
+\begin{enumerate}
+	\item Classify unseen examples correctly as out-of-distribution
+	\item Estimate amount of classes (this prediction should be N-K)
+	\item Predict which samples belong to which class (we correctly reproduce the labels based on the true clustering) -- e.g. this could be realized with the expectation maximization algorithm, given the previous tasks were performed correctly
+\end{enumerate}
+
+In figure \ref{fig:detectionofunseenclasses} one can see the optimal behavior for our model in the embedded space.
+
+\begin{figure}
+	\centering
+	\begin{subfigure}[h]{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{../figures/detection_of_unseen_classes_unclassified}
+		\caption{We correctly classify the new examples as out-of-distribution (ood). Here indicated with plus.}
+		\label{fig:detectionofunseenclassesunclassified}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[h]{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{../figures/detection_of_unseen_classes_classified}
+		\caption{We can correctly cluster the out-of-distribution examples as an unseen training example.}
+		\label{fig:detectionofunseenclassesclassified}
+	\end{subfigure}
+	\caption{In this figure one can see the embedded space for a problem with $S=4$ and $U=2$. In this case the seen classes are 0, 1, 2, 3, while examples from the classes A and B were not presented to the model during training.}
+	\label{fig:detectionofunseenclasses}
+\end{figure}
+
+\subsection{Expected results}
+We hope we are able to correctly detect and cluster new examples which are drawn from the same data set. When comparing to \cite{yang2018robust} where the authors trained their model on the MNIST data set and feed images from the CIFAR to see if their model correctly puts them in a separate area in the embedding space. We expect that training on 80 classes and testing on 20 classes of the CIFAR100-set will place the remaining classes in a more meaningful way. 
+
+\section{Baseline Implementation}
+
+As our baseline implementation we plan to build a very small network consisting of the following parts: Use a feature extractor (like ResNet, VGGNet) combined with a embedding space encoder. Using this encoded vector, we can measure the priority based on the correlation between classes. 
+Therefore, the model is able to build the reasonable order of training schedule by choosing the training data based on the priority. 
+
+We might borrow the structure of the network and the loss calculation from [Prototypical Networks for Few-shot Learning] or [Neural Statistician]
+Protorypical Learning in General: https://icml.cc/2012/papers/389.pdf

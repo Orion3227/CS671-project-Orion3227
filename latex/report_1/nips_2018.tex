@@ -5,7 +5,7 @@
 % before loading nips_2018
 
 % ready for submission
-\usepackage{../nips2018_style/nips_2018}
+\usepackage[final]{../nips2018_style/nips_2018}
 
 % to compile a preprint version, e.g., for submission to arXiv, add
 % add the [preprint] option:
@@ -25,6 +25,9 @@
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
+\usepackage{graphicx}		% Images
+\usepackage{subcaption}		% Subfigures
+\usepackage{amsmath}
 
 \title{Formatting instructions for NIPS 2018}
 
@@ -39,34 +42,18 @@
 % author name.
 
 \author{
-  David S.~Hippocampus\thanks{Use footnote for providing further
-    information about author (webpage, alternative
-    address)---\emph{not} for acknowledging funding agencies.} \\
-  Department of Computer Science\\
-  Cranberry-Lemon University\\
-  Pittsburgh, PA 15213 \\
-  \texttt{hippo@cs.cranberry-lemon.edu} \\
+  Nick Heppert\\
+  \texttt{20186505} \\
   %% examples of more authors
-  %% \And
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
-  %% \AND
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
-  %% \And
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
-  %% \And
-  %% Coauthor \\
-  %% Affiliation \\
-  %% Address \\
-  %% \texttt{email} \\
+  \And
+  Jeonggwan Lee\\
+  \texttt{20184...}\\
+  \And
+  Minki Jo\\
+  \texttt{20184...}\\
+  \And
+  Gautier Clerc\\
+  \texttt{20186...}
 }
 
 \begin{document}
@@ -74,5 +61,8 @@
 
 \maketitle
 \input{content.tex}
+
+\bibliography{../literature.bib}
+\bibliographystyle{../icml2018_style/icml2018}
 
 \end{document}
