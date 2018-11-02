@@ -7,13 +7,9 @@ import tensorflow as tf
 import argparse
 import time
 import os
-<<<<<<< HEAD
 import _pickle as pickle
 import pdb
 #import cPickle as pickle
-=======
-import cPickle as pickle
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 FLAGS = None
@@ -28,12 +24,9 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y):
     for i in range(batch_num):
         batch_x = test_x[i*batch_size:(i+1)*batch_size]
         batch_y = test_y[i*batch_size:(i+1)*batch_size]
-<<<<<<< HEAD
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         true_count += sess.run(eval_correct, feed_dict={images:batch_x_reshp, labels:batch_y})
-=======
         true_count += sess.run(eval_correct, feed_dict={images:batch_x, labels:batch_y})
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
     
     return true_count / test_num
 
@@ -46,27 +39,18 @@ def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labe
     for i in range(batch_num):
         batch_x = train_x[i*batch_size:(i+1)*batch_size]
         batch_y = train_y[i*batch_size:(i+1)*batch_size]
-<<<<<<< HEAD
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x_reshp, labels_placeholder:batch_y})
-=======
         sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x, labels_placeholder:batch_y})
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 
     sess.run(average_op)
 
 def run_training():
 
     # load the data
-<<<<<<< HEAD
     print(150*'*')
     with open("mnist.pkl", "rb") as fid:
         dataset = pickle.load(fid, encoding='latin1')
-=======
-    print 150*'*'
-    with open("mnist.data", "rb") as fid:
-        dataset = pickle.load(fid)
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
     train_x, train_y = dataset[0]
     test_x, test_y = dataset[1]
     train_num = train_x.shape[0]
@@ -99,26 +83,18 @@ def run_training():
     loss_before = np.inf
     score_before = 0.0
     stopping = 0
-<<<<<<< HEAD
     index = list(range(train_num))
-=======
-    index = range(train_num)
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
     np.random.shuffle(index)
     batch_size = FLAGS.batch_size
     batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
     #saver = tf.train.Saver(max_to_keep=1)
 
-<<<<<<< HEAD
     iter = 0
-=======
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
     # train the framework with the training data
     while stopping<FLAGS.stop:
         time1 = time.time()
         loss_now = 0.0
         score_now = 0.0
-<<<<<<< HEAD
         iter += 1
         if iter % 100 == 0:
             print("iter : {}".format(iter))
@@ -133,32 +109,23 @@ def run_training():
             ##result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x,
             ##    labels:batch_y, lr:FLAGS.learning_rate})
             result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x_reshp,
-=======
-    
+   		labels:batch_y, lr:FLAGS.learning_rate})
+ 
         for i in range(batch_num):
             batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
             batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
             result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x,
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
                 labels:batch_y, lr:FLAGS.learning_rate})
             loss_now += result[1]
             score_now += result[2]
         score_now /= train_num
 
-<<<<<<< HEAD
         print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
-=======
-        print 'epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100)
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 
         if loss_now > loss_before or score_now < score_before:
             stopping += 1
             FLAGS.learning_rate *= FLAGS.decay
-<<<<<<< HEAD
             print ("\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping))
-=======
-            print "\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping)
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 
         loss_before = loss_now
         score_before = score_now
@@ -170,19 +137,14 @@ def run_training():
         np.random.shuffle(index)
 
         time2 = time.time()
-<<<<<<< HEAD
         print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
 
     # test the framework with the test data
     test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
     print ('accuracy on the test dataset: {:.3f}%'.format(test_score*100))
-=======
-        print 'time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0)
 
     # test the framework with the test data
     test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
-    print 'accuracy on the test dataset: {:.3f}%'.format(test_score*100)
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 
     sess.close()
 
@@ -198,7 +160,6 @@ if __name__ == '__main__':
     parser.add_argument('--num_classes', type=int, default=10, help='the number of the classes')
 
     FLAGS, unparsed = parser.parse_known_args()
-<<<<<<< HEAD
     print (150*'*')
     print ('Configuration of the training:')
     print ('learning rate:', FLAGS.learning_rate)
@@ -208,17 +169,6 @@ if __name__ == '__main__':
     print ('value of the temperature:', FLAGS.temp)
     print ('number of classes:', FLAGS.num_classes)
     print ('GPU id:', FLAGS.gpu)
-=======
-    print 150*'*'
-    print 'Configuration of the training:'
-    print 'learning rate:', FLAGS.learning_rate
-    print 'batch size:', FLAGS.batch_size
-    print 'stopping:', FLAGS.stop
-    print 'learning rate decay:', FLAGS.decay
-    print 'value of the temperature:', FLAGS.temp
-    print 'number of classes:', FLAGS.num_classes
-    print 'GPU id:', FLAGS.gpu
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
     #print 'path to save the model:', FLAGS.log_dir
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(FLAGS.gpu)
