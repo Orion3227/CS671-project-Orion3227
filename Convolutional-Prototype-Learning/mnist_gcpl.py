@@ -7,8 +7,12 @@ import tensorflow as tf
 import argparse
 import time
 import os
+<<<<<<< HEAD
 import _pickle as pickle
 #import cPickle as pickle
+=======
+import cPickle as pickle
+>>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 FLAGS = None

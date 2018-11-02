@@ -1,8 +1,12 @@
 #################################################
 import numpy as np
 import tensorflow as tf
+<<<<<<< HEAD
 #import cPickle as pickle
 import _pickle as pickle
+=======
+import cPickle as pickle
+>>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 import struct
 
 ##################################################
