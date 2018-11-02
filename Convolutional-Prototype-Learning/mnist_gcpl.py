@@ -7,12 +7,8 @@ import tensorflow as tf
 import argparse
 import time
 import os
-<<<<<<< HEAD
 import _pickle as pickle
 #import cPickle as pickle
-=======
-import cPickle as pickle
->>>>>>> 742d60a2dc554d4a7c6bd8559481c96ecf2176f2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 FLAGS = None
@@ -27,7 +23,8 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y):
     for i in range(batch_num):
         batch_x = test_x[i*batch_size:(i+1)*batch_size]
         batch_y = test_y[i*batch_size:(i+1)*batch_size]
-        true_count += sess.run(eval_correct, feed_dict={images:batch_x, labels:batch_y})
+        batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
+        true_count += sess.run(eval_correct, feed_dict={images:batch_x_reshp, labels:batch_y})
     
     return true_count / test_num
 
@@ -40,16 +37,18 @@ def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labe
     for i in range(batch_num):
         batch_x = train_x[i*batch_size:(i+1)*batch_size]
         batch_y = train_y[i*batch_size:(i+1)*batch_size]
-        sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x, labels_placeholder:batch_y})
+        batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
+        sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x_reshp, labels_placeholder:batch_y})
 
     sess.run(average_op)
 
 def run_training():
 
     # load the data
-    print 150*'*'
-    with open("mnist.data", "rb") as fid:
-        dataset = pickle.load(fid)
+    print (150*'*')
+    #with open("mnist.data", "rb") as fid:
+    with open("/home/ubuntu/codes/Convolutional-Prototype-Learning/mnist.pkl", "rb") as fid:
+        dataset = pickle.load(fid, encoding='latin1')
     train_x, train_y = dataset[0]
     test_x, test_y = dataset[1]
     train_num = train_x.shape[0]
@@ -84,7 +83,7 @@ def run_training():
     loss_before = np.inf
     score_before = 0.0
     stopping = 0
-    index = range(train_num)
+    index = list(range(train_num))
     np.random.shuffle(index)
     batch_size = FLAGS.batch_size
     batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
@@ -99,19 +98,20 @@ def run_training():
         for i in range(batch_num):
             batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
             batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
-            result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x,
+            batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
+            result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x_reshp,
                 labels:batch_y, lr:FLAGS.learning_rate})
             loss_now += result[1]
             score_now += result[2]
         score_now /= train_num
 
-        print 'epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100)
+        print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
         #print sess.run(centers)
     
         if loss_now > loss_before or score_now < score_before:
             stopping += 1
             FLAGS.learning_rate *= FLAGS.decay
-            print "\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping)
+            print ("\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping))
             
         loss_before = loss_now
         score_before = score_now
@@ -123,11 +123,11 @@ def run_training():
         np.random.shuffle(index)
 
         time2 = time.time()
-        print 'time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0)
+        print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
         
     # test the framework with the test data
     test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
-    print 'accuracy on the test dataset: {:.3f}%'.format(test_score*100)
+    print ('accuracy on the test dataset: {:.3f}%'.format(test_score*100))
 
     sess.close()
 
@@ -140,20 +140,20 @@ if __name__ == '__main__':
     parser.add_argument('--decay', type=float, default=0.3, help='the value to decay the learning rate')
     parser.add_argument('--temp', type=float, default=1.0, help='the temperature used for calculating the loss')
     parser.add_argument('--weight_pl', type=float, default=0.001, help='the weight for the prototype loss (PL)')
-    parser.add_argument('--gpu', type=int, default=3, help='the gpu id for use')
+    parser.add_argument('--gpu', type=int, default=1, help='the gpu id for use')
     parser.add_argument('--num_classes', type=int, default=10, help='the number of the classes')
 
     FLAGS, unparsed = parser.parse_known_args()
-    print 150*'*'
-    print 'Configuration of the training:'
-    print 'learning rate:', FLAGS.learning_rate
-    print 'batch size:', FLAGS.batch_size
-    print 'stopping:', FLAGS.stop
-    print 'learning rate decay:', FLAGS.decay
-    print 'value of the temperature:', FLAGS.temp
-    print 'prototype loss weight:', FLAGS.weight_pl
-    print 'number of classes:', FLAGS.num_classes
-    print 'GPU id:', FLAGS.gpu
+    print (150*'*')
+    print ('Configuration of the training:')
+    print ('learning rate:', FLAGS.learning_rate)
+    print ('batch size:', FLAGS.batch_size)
+    print ('stopping:', FLAGS.stop)
+    print ('learning rate decay:', FLAGS.decay)
+    print ('value of the temperature:', FLAGS.temp)
+    print ('prototype loss weight:', FLAGS.weight_pl)
+    print ('number of classes:', FLAGS.num_classes)
+    print ('GPU id:', FLAGS.gpu)
     #print 'path to save the model:', FLAGS.log_dir
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(FLAGS.gpu)

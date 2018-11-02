@@ -26,7 +26,7 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y):
         batch_y = test_y[i*batch_size:(i+1)*batch_size]
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         true_count += sess.run(eval_correct, feed_dict={images:batch_x_reshp, labels:batch_y})
-        true_count += sess.run(eval_correct, feed_dict={images:batch_x, labels:batch_y})
+        #true_count += sess.run(eval_correct, feed_dict={images:batch_x, labels:batch_y})
     
     return true_count / test_num
 
@@ -41,7 +41,6 @@ def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labe
         batch_y = train_y[i*batch_size:(i+1)*batch_size]
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x_reshp, labels_placeholder:batch_y})
-        sess.run([add_op, count_op], feed_dict={images_placeholder:batch_x, labels_placeholder:batch_y})
 
     sess.run(average_op)
 
@@ -49,7 +48,7 @@ def run_training():
 
     # load the data
     print(150*'*')
-    with open("mnist.pkl", "rb") as fid:
+    with open("/home/ubuntu/codes/Convolutional-Prototype-Learning/mnist.pkl", "rb") as fid:
         dataset = pickle.load(fid, encoding='latin1')
     train_x, train_y = dataset[0]
     test_x, test_y = dataset[1]
@@ -110,12 +109,6 @@ def run_training():
             ##    labels:batch_y, lr:FLAGS.learning_rate})
             result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x_reshp,
    		labels:batch_y, lr:FLAGS.learning_rate})
- 
-        for i in range(batch_num):
-            batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
-            batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
-            result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x,
-                labels:batch_y, lr:FLAGS.learning_rate})
             loss_now += result[1]
             score_now += result[2]
         score_now /= train_num
