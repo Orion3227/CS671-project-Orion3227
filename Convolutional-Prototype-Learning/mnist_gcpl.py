@@ -8,24 +8,33 @@ import argparse
 import time
 import os
 import _pickle as pickle
+import pdb
+import matplotlib.pyplot as plt
 #import cPickle as pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 FLAGS = None
 
 # compute accuracy on the test dataset
-def do_eval(sess, eval_correct, images, labels, test_x, test_y):
+def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
     true_count = 0.0
     test_num = test_y.shape[0]
     batch_size = FLAGS.batch_size
-    batch_num = test_num // batch_size if test_num % batch_size == 0 else test_num // batch_size + 1
+    batch_num = test_num // batch_size if test_num % batch_size == 0 else test_num // batch_size + 1 
+    eval_points = []
 
     for i in range(batch_num):
         batch_x = test_x[i*batch_size:(i+1)*batch_size]
         batch_y = test_y[i*batch_size:(i+1)*batch_size]
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         true_count += sess.run(eval_correct, feed_dict={images:batch_x_reshp, labels:batch_y})
+        features_eval = sess.run(features, feed_dict={images:batch_x_reshp, labels:batch_y})
+        eval_points += list(features_eval)
     
+    eval_x = [t[0] for t in eval_points]
+    eval_y = [t[1] for t in eval_points]
+    plt.scatter(eval_x, eval_y)
+    plt.savefig('myfig')
     return true_count / test_num
 
 # initialize the prototype with the mean vector (on the train dataset) of the corresponding class
@@ -70,63 +79,73 @@ def run_training():
     #counts = tf.get_variable('counts', [FLAGS.num_classes], dtype=tf.int32,
     #    initializer=tf.constant_initializer(0), trainable=False)
     #add_op, count_op, average_op = net.init_centers(features, labels, centers, counts)
-
-    init = tf.global_variables_initializer()
-
-    # initialize the variables
+  
     sess = tf.Session()
-    sess.run(init)
-    #compute_centers(sess, add_op, count_op, average_op, images, labels, train_x, train_y)
+    load_saver = tf.train.Saver()
+    load_file = os.path.join(FLAGS.log_dir, 'model.ckpt-22')
+    if os.path.isfile(load_file+".meta"):
+        load_saver.restore(sess, load_file)
+    else:
+        init = tf.global_variables_initializer()
 
-    # run the computation graph (train and test process)
-    epoch = 1
-    loss_before = np.inf
-    score_before = 0.0
-    stopping = 0
-    index = list(range(train_num))
-    np.random.shuffle(index)
-    batch_size = FLAGS.batch_size
-    batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
-    #saver = tf.train.Saver(max_to_keep=1)
+        # initialize the variables
+        sess = tf.Session()
+        sess.run(init)
+        #compute_centers(sess, add_op, count_op, average_op, images, labels, train_x, train_y)
 
-    # train the framework with the training data
-    while stopping<FLAGS.stop:
-        time1 = time.time()
-        loss_now = 0.0
-        score_now = 0.0
-    
-        for i in range(batch_num):
-            batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
-            batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
-            batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
-            result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x_reshp,
-                labels:batch_y, lr:FLAGS.learning_rate})
-            loss_now += result[1]
-            score_now += result[2]
-        score_now /= train_num
-
-        print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
-        #print sess.run(centers)
-    
-        if loss_now > loss_before or score_now < score_before:
-            stopping += 1
-            FLAGS.learning_rate *= FLAGS.decay
-            print ("\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping))
-            
-        loss_before = loss_now
-        score_before = score_now
-
-        #checkpoint_file = os.path.join(FLAGS.log_dir, 'model.ckpt')
-        #saver.save(sess, checkpoint_file, global_step=epoch)
-
-        epoch += 1
+        # run the computation graph (train and test process)
+        epoch = 1
+        loss_before = np.inf
+        score_before = 0.0
+        stopping = 0
+        index = list(range(train_num))
         np.random.shuffle(index)
+        batch_size = FLAGS.batch_size
+        batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
+        saver = tf.train.Saver(max_to_keep=1)
 
-        time2 = time.time()
-        print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
+        # train the framework with the training data
+        while stopping<FLAGS.stop:
+            time1 = time.time()
+            loss_now = 0.0
+            score_now = 0.0
         
+            for i in range(batch_num):
+                batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
+                batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
+                batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
+                result = sess.run([train_op, loss, eval_correct], feed_dict={images:batch_x_reshp,
+                    labels:batch_y, lr:FLAGS.learning_rate})
+                # features_eval = sess.run([features], feed_dict={images:batch_x_reshp, 
+                #    labels:batch_y, lr:FLAGS.learning_rate})
+                # features_eval.shape (1, 50, 2)
+                loss_now += result[1]
+                score_now += result[2]
+            score_now /= train_num
+
+            print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
+            #print sess.run(centers)
+        
+            if loss_now > loss_before or score_now < score_before:
+                stopping += 1
+                FLAGS.learning_rate *= FLAGS.decay
+                print ("\033[1;31;40mdecay learning rate {}th time!\033[0m".format(stopping))
+                
+            loss_before = loss_now
+            score_before = score_now
+
+            checkpoint_file = os.path.join(FLAGS.log_dir, 'model.ckpt')
+            saver.save(sess, checkpoint_file, global_step=epoch)
+
+            epoch += 1
+            np.random.shuffle(index)
+
+            time2 = time.time()
+            print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
+        
+    #pdb.set_trace() 
     # test the framework with the test data
-    test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
+    test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y, features)
     print ('accuracy on the test dataset: {:.3f}%'.format(test_score*100))
 
     sess.close()
@@ -135,7 +154,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--learning_rate', type=float, default=0.001, help='initial learning rate')
     parser.add_argument('--batch_size', type=int, default=50, help='batch size for training')
-    #parser.add_argument('--log_dir', type=str, default='data/', help='directory to save the data')
+    parser.add_argument('--log_dir', type=str, default='data/', help='directory to save the data')
     parser.add_argument('--stop', type=int, default=3, help='stopping number')
     parser.add_argument('--decay', type=float, default=0.3, help='the value to decay the learning rate')
     parser.add_argument('--temp', type=float, default=1.0, help='the temperature used for calculating the loss')
