@@ -1,4 +1,7 @@
 # Convolutional-Prototype-Learning
+
+This is the original github page.(https://github.com/YangHM/Convolutional-Prototype-Learning)
+
 An implementation (TensorFlow) of CPL and GCPL appeared in CVPR2018 paper: "Robust Classification with Convolutional Prototype Learning";
 
 The "mnist.data" is the processed MNIST dataset from "http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz", I re-save them with cPickle in python for conveniently reading and loading, please contact me for the whole dataset; 
