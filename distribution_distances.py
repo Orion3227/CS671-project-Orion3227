@@ -58,6 +58,16 @@ class GaussianDistribution:
         ax = self.add_to_plot_2d(ax)
         fig.show()
 
+    def mahalanobis_distance(self, sample):
+        return np.sqrt((sample - self.mu).T.dot(np.linalg.pinv(self.std)).dot(sample - self.mu))
+
+    def is_in_distribution(self, sample, treshold=0.3):
+        distance = self.mahalanobis_distance(sample)
+        print("Mahalanobis Distance: {}".format(distance))
+        norm_distance = distance / (distance + 1)
+        print("Normalized: {}".format(norm_distance))
+        return distance < treshold       
+
 
 def KullbackLeiberDivergenceSamples(pdf_0, pdf_1, dimension, range=[-10, 10]):
     pass
@@ -131,5 +141,10 @@ if __name__ == "__main__":
     gaussian_distribution_5d.plot_2d(dim=(2,3))
 
     pdf_1d = gaussian_distribution_1d.pdf
+    pdf_2d = gaussian_distribution_2d.pdf
+    print("PDF 2D Mu: {}".format(pdf_2d(gaussian_distribution_2d.mu)))
+
+    print(gaussian_distribution_5d.is_in_distribution(gaussian_distribution_5d.mu))
+    print(gaussian_distribution_5d.is_in_distribution(gaussian_distribution_5d.mu + np.array([5, 5, 5, 5, 5])))
     
     input("Finish?")
