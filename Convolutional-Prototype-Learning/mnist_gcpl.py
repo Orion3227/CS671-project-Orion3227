@@ -56,7 +56,7 @@ def run_training():
     # load the data
     print (150*'*')
     #with open("mnist.data", "rb") as fid:
-    with open("/home/ubuntu/codes/Convolutional-Prototype-Learning/mnist.pkl", "rb") as fid:
+    with open("/home/ubuntu/datasets/mnist.pkl", "rb") as fid:
         dataset = pickle.load(fid, encoding='latin1')
     train_x, train_y = dataset[0]
     test_x, test_y = dataset[1]
