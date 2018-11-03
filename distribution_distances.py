@@ -24,12 +24,12 @@ class GaussianDistribution:
         self.mu = np.mean(data, axis=0)
         self.std = np.cov(data.T)
         self.data = data
-        print(self.data)
+        # print(self.data)
         print("Updated Gaussian Distribution to:\n\tmu: {}\n\tstd: {}".format(self.mu, self.std))
 
     @property
     def dimension(self):
-        return self.data.shape[1]
+        return self.mu.shape[0]
 
     @property
     def pdf(self):
@@ -44,7 +44,6 @@ class GaussianDistribution:
         return ax
 
     def add_to_plot_2d(self, ax, dim=(0, 1), color="C0"):
-        print(len(self.data[:, dim[0]]))
         ax.scatter(self.data[:, dim[0]], self.data[:, dim[1]])
         # TODO add code for Gaussian visualization
         return ax
@@ -64,7 +63,7 @@ def KullbackLeiberDivergenceSamples(pdf_0, pdf_1, dimension, range=[-10, 10]):
     pass
 
 def KullbackLeiberDivergenceSingleVarianteGaussians(gaussian_0, gaussian_1):
-    return 0
+    pass
 
 def KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_0, gaussian_1):
     if gaussian_1.dimension != gaussian_0.dimension:
@@ -86,14 +85,34 @@ def KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_0, gaussian_1):
    
 def JensenShannonDivergenceMultiVarianteGaussians(gaussian_0, gaussian_1):
     #https://math.stackexchange.com/questions/60911/multivariate-normal-difference-distribution
-    pass
+    #https://math.stackexchange.com/questions/275648/multiplication-of-a-random-variable-with-constant
+    # Implementation with Monte Carlo Sampling:
+    #https://stats.stackexchange.com/questions/345915/trying-to-implement-the-jensen-shannon-divergence-for-multivariate-gaussians
+    gaussian_m = GaussianDistribution()
+    gaussian_m.mu = 1/2 * gaussian_0.mu + 1/2 * gaussian_1.mu
+    # I'm not sure if you have to take the quadratic term here
+    # According to the matrix cookbook 8.1.4 - Equation 355 we have
+    # A = B = 1/2
+    # So this holds true only if distributions are independent!
+    gaussian_m.std = (1/2) ** 2 * gaussian_0.std + (1/2) ** 2 * gaussian_1.std
+    # gaussian_m.std = (1/2) * gaussian_0.std + (1/2) * gaussian_1.std
+
+    KL_0 = KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_0, gaussian_m)
+    KL_1 = KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_1, gaussian_m)
+
+    divergence = 1/2 * KL_0 + 1/2 * KL_1
+    return divergence
+
 
 if __name__ == "__main__":
     data_1d = np.array([-1.0 , -0.4, -0.2, 0, 0.1, 0.3, 0.5])
     data_2d = np.array([[-1.0, 0.5], [-0.5, 0.3], [-0.1, 0.2], [0.2, -0.4]])
-    data_5d = np.array([[0.1, 0.3, 0.4, 0.8, 0.9],
-                        [3.2, 2.4, 2.4, 0.1, 5.5],
-                        [10., 8.2, 4.3, 2.6, 0.9]])
+    data_5d = np.array([[0.15, 0.32, 0.42, 0.89, 0.91],
+                        [3.2, 9.4, 3.1, 5.12, 9.5],
+                        [10.3, 8.2, 4.3, 0.6, 1.6],
+                        [10.6, 8.9, 4.0, 1.6, 1.12],
+                        [10.7, 3.2, 3.8, 1.2, 4.13],
+                        [10.8, 0.2, 4.6, 0.9, 1.3]])
 
     gaussian_distribution_1d = GaussianDistribution(data_1d)
     gaussian_distribution_1d.plot_1d(dim=0)
@@ -105,6 +124,8 @@ if __name__ == "__main__":
 
     kl_2d_self = KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_distribution_2d, gaussian_distribution_2d)
     print("Kullbackleiber Divergence 2D for self: {}".format(kl_2d_self))
+    js_2d_self = JensenShannonDivergenceMultiVarianteGaussians(gaussian_distribution_2d, gaussian_distribution_2d)
+    print("Jensen Shannon Divergence 2D for self: {}".format(js_2d_self))
 
     gaussian_distribution_5d = GaussianDistribution(data_5d)
     gaussian_distribution_5d.plot_2d(dim=(2,3))
