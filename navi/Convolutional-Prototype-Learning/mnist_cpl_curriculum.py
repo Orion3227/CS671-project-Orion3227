@@ -98,9 +98,11 @@ def run_training(log_file):
     batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
     #saver = tf.train.Saver(max_to_keep=1)
 
-    ratio = 0.8
+    ratio = FLAGS.ratio
     iter = 0
     step = 0
+    log_loss = 0
+    log_acc = 0
     # pdb.set_trace()
     # train the framework with the training data
     while stopping < FLAGS.stop:
@@ -137,7 +139,13 @@ def run_training(log_file):
             loss_now += result[1]
             score_now += result[2]
             wrong_list = result[3]
-            log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(step, result[1], result[2]/batch_size*100))
+            log_loss += result[1]
+            log_acc += result[2]
+            if (step % FLAGS.log_period == 0) and (step != 0):
+                log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(
+                    step, log_loss/FLAGS.log_period, log_acc/batch_size/FLAGS.log_period*100))
+                log_loss = 0
+                log_acc = 0
             step += 1
 
         score_now /= train_num
@@ -183,6 +191,8 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', type=int, default=1, help='the gpu id for use')
     parser.add_argument('--num_classes', type=int, default=10, help='the number of the classes')
     parser.add_argument('--log_dir', type = str, default = os.getcwd()+'/log', help = 'Directory where the log file is stored')
+    parser.add_argument('--ratio', type=float, default=0.8, help='the temperature used for calculating the loss')
+    parser.add_argument('--log_period', type=int, default=20, help='log writing period')
 
     FLAGS, unparsed = parser.parse_known_args()
     print (150*'*')
@@ -199,7 +209,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = str(FLAGS.gpu)
     if not os.path.exists(FLAGS.log_dir):
         os.mkdir(FLAGS.log_dir)
-    log_file = open(os.path.join(FLAGS.log_dir, 'log_curriculum.csv'),'w')
+    log_file = open(os.path.join(FLAGS.log_dir, 'log_curriculum_{:d}%.csv'.format(int(FLAGS.ratio*100))),'w')
     run_training(log_file)
     log_file.close()
 
