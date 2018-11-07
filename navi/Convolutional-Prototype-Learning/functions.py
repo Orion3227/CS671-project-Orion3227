@@ -4,6 +4,7 @@ import tensorflow as tf
 #import cPickle as pickle
 import _pickle as pickle
 import struct
+import pdb
 
 ##################################################
 
@@ -140,6 +141,23 @@ def evaluation(features, labels, centers):
     correct = tf.equal(tf.cast(prediction, tf.int32), labels, name='correct')
     return tf.reduce_sum(tf.cast(correct, tf.float32), name='evaluation')
 
+
+def find_wrong(features, labels, centers):
+    dist = distance(features, centers) 
+    # pdb.set_trace()
+    class_num = 10
+    prediction = tf.argmin(dist, axis=1, name='prediction')
+    correct = tf.equal(tf.cast(prediction, tf.int32), labels, name='correct')
+    correct_cast = tf.cast(correct, tf.int32)
+    wrong_labels = tf.multiply((1-correct_cast), labels)
+    wrong_labels_list = tf.zeros(class_num, dtype = tf.int32)
+    
+    for i in range(class_num):
+        wrong_num = tf.reduce_sum(tf.cast(tf.equal(wrong_labels, i), dtype = tf.int32))
+        one_hot = tf.one_hot(i,class_num, dtype = tf.int32) * wrong_num
+        wrong_labels_list += one_hot
+
+    return wrong_labels_list
 
 ##################################################
 
