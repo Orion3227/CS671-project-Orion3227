@@ -44,7 +44,7 @@ def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labe
 
     sess.run(average_op)
 
-def run_training():
+def run_training(log_file):
 
     # load the data
     print(150*'*')
@@ -89,6 +89,7 @@ def run_training():
     #saver = tf.train.Saver(max_to_keep=1)
 
     iter = 0
+    pdb.set_trace()
     # train the framework with the training data
     while stopping<FLAGS.stop:
         time1 = time.time()
@@ -114,7 +115,7 @@ def run_training():
         score_now /= train_num
 
         print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
-
+        log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(epoch, loss_now, score_now*100))
         if loss_now > loss_before or score_now < score_before:
             stopping += 1
             FLAGS.learning_rate *= FLAGS.decay
@@ -151,6 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('--temp', type=float, default=0.5, help='the temperature used for calculating the loss')
     parser.add_argument('--gpu', type=int, default=0, help='the gpu id for use')
     parser.add_argument('--num_classes', type=int, default=10, help='the number of the classes')
+    parser.add_argument('--log_dir', type = str, default = os.getcwd()+'/log', help = 'Directory where the log file is stored')
 
     FLAGS, unparsed = parser.parse_known_args()
     print (150*'*')
@@ -165,6 +167,9 @@ if __name__ == '__main__':
     #print 'path to save the model:', FLAGS.log_dir
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(FLAGS.gpu)
-
-    run_training()
+    if not os.path.exists(FLAGS.log_dir):
+        os.mkdir(FLAGS.log_dir)
+    log_file = open(os.path.join(FLAGS.log_dir, 'log.csv'),'w')
+    run_training(log_file)
+    log_file.close()
 
