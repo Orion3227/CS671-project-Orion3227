@@ -99,9 +99,10 @@ def run_training(log_file):
     #saver = tf.train.Saver(max_to_keep=1)
 
     iter = 0
+    step = 0
     # pdb.set_trace()
     # train the framework with the training data
-    while epoch < 2:
+    while stopping < FLAGS.stop:
         time1 = time.time()
         loss_now = 0.0
         score_now = 0.0
@@ -122,6 +123,8 @@ def run_training(log_file):
    		labels:batch_y, lr:FLAGS.learning_rate})
             loss_now += result[1]
             score_now += result[2]
+            log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(step, result[1], result[2]/batch_size*100))
+            step += 1
         score_now /= train_num
 
         print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
@@ -143,7 +146,7 @@ def run_training(log_file):
         time2 = time.time()
         print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
     
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # test the framework with the test data
     test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
@@ -159,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=0.001, help='initial learning rate')
     parser.add_argument('--batch_size', type=int, default=50, help='batch size for training and test')
     #parser.add_argument('--log_dir', type=str, default='data/', help='directory to save the data')
-    parser.add_argument('--stop', type=int, default=1, help='stopping number')
+    parser.add_argument('--stop', type=int, default=3, help='stopping number')
     parser.add_argument('--decay', type=float, default=0.3, help='the value to decay the learning rate')
     parser.add_argument('--temp', type=float, default=0.5, help='the temperature used for calculating the loss')
     parser.add_argument('--gpu', type=int, default=0, help='the gpu id for use')

@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import argparse
 import time
-import os
+import os, math, random
 import _pickle as pickle
 import pdb
 #import cPickle as pickle
@@ -58,8 +58,8 @@ def run_training(log_file):
 
     # label_index: list of list 
     # ex) label_index[3] conatins every indicies of 3 data
-    class_num = 10
-    label_index = [[] for i in range(class_num)]
+    num_classes = FLAGS.num_classes
+    label_index = [[] for i in range(num_classes)]
     for i in range(len(train_y)):
         label_index[train_y[i]].append(i)
         
@@ -98,20 +98,34 @@ def run_training(log_file):
     batch_num = train_num//batch_size if train_num % batch_size==0 else train_num//batch_size+1
     #saver = tf.train.Saver(max_to_keep=1)
 
+    ratio = 0.8
     iter = 0
+    step = 0
     # pdb.set_trace()
     # train the framework with the training data
-    while epoch < 2:
+    while stopping < FLAGS.stop:
         time1 = time.time()
         loss_now = 0.0
         score_now = 0.0
         iter += 1
         if iter % 100 == 0:
             print("iter : {}".format(iter))
-
+        wrong_list = np.zeros(num_classes)
         for i in range(batch_num):
-            batch_x = train_x[index[i*batch_size:(i+1)*batch_size]]
-            batch_y = train_y[index[i*batch_size:(i+1)*batch_size]]
+            
+            # selecting probability
+            
+            class_prob = ratio * wrong_list/batch_size + (1 - ratio * sum(wrong_list)/batch_size)/10
+            input_num_list = [math.ceil(batch_size * class_prob[j]) for j in range(num_classes)]
+            batch_indicies = []
+            for k in range(num_classes):
+                rand_smpl = [label_index[k][j] for j in sorted(
+                    random.sample(range(len(label_index[k])), input_num_list[k]))]
+                batch_indicies += rand_smpl
+            np.random.shuffle(batch_indicies)
+            # pdb.set_trace()
+            batch_x = train_x[batch_indicies[:batch_size]]
+            batch_y = train_y[batch_indicies[:batch_size]]
             # JG
             batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
             # batch_x.shape : (50, 784)
@@ -122,10 +136,14 @@ def run_training(log_file):
    		labels:batch_y, lr:FLAGS.learning_rate})
             loss_now += result[1]
             score_now += result[2]
+            wrong_list = result[3]
+            log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(step, result[1], result[2]/batch_size*100))
+            step += 1
+
         score_now /= train_num
 
         print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
-        log_file.write('{}, loss, {:.3f}, acc, {:.3f}\n'.format(epoch, loss_now, score_now*100))
+        
         if loss_now > loss_before or score_now < score_before:
             stopping += 1
             FLAGS.learning_rate *= FLAGS.decay
@@ -143,7 +161,7 @@ def run_training(log_file):
         time2 = time.time()
         print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
     
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # test the framework with the test data
     test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y)
@@ -159,10 +177,10 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=0.001, help='initial learning rate')
     parser.add_argument('--batch_size', type=int, default=50, help='batch size for training and test')
     #parser.add_argument('--log_dir', type=str, default='data/', help='directory to save the data')
-    parser.add_argument('--stop', type=int, default=1, help='stopping number')
+    parser.add_argument('--stop', type=int, default=3, help='stopping number')
     parser.add_argument('--decay', type=float, default=0.3, help='the value to decay the learning rate')
     parser.add_argument('--temp', type=float, default=0.5, help='the temperature used for calculating the loss')
-    parser.add_argument('--gpu', type=int, default=0, help='the gpu id for use')
+    parser.add_argument('--gpu', type=int, default=1, help='the gpu id for use')
     parser.add_argument('--num_classes', type=int, default=10, help='the number of the classes')
     parser.add_argument('--log_dir', type = str, default = os.getcwd()+'/log', help = 'Directory where the log file is stored')
 
@@ -181,7 +199,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = str(FLAGS.gpu)
     if not os.path.exists(FLAGS.log_dir):
         os.mkdir(FLAGS.log_dir)
-    log_file = open(os.path.join(FLAGS.log_dir, 'log.csv'),'w')
+    log_file = open(os.path.join(FLAGS.log_dir, 'log_curriculum.csv'),'w')
     run_training(log_file)
     log_file.close()
 
