@@ -124,7 +124,7 @@ def run_training():
             score_now /= train_num
 
             print ('epoch {}: training: loss --> {:.3f}, acc --> {:.3f}%'.format(epoch, loss_now, score_now*100))
-            #print sess.run(centers)
+            print (sess.run(centers))
         
             if loss_now > loss_before or score_now < score_before:
                 stopping += 1
