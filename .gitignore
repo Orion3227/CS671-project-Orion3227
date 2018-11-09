@@ -6,3 +6,4 @@
 *.log
 *.swp
 *.pyc
+Convolutional-Prototype-Learning/data/*
