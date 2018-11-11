@@ -94,6 +94,9 @@ def KullbackLeiberDivergenceMultiVarianteGaussians(gaussian_0, gaussian_1):
     return divergence   
    
 def JensenShannonDivergenceMultiVarianteGaussians(gaussian_0, gaussian_1):
+    # https://www.tensorflow.org/api_docs/python/tf/contrib/distributions/MultivariateNormalFullCovariance#kl_divergence
+    # We might reimplement this in Tensorflow?
+    
     #https://math.stackexchange.com/questions/60911/multivariate-normal-difference-distribution
     #https://math.stackexchange.com/questions/275648/multiplication-of-a-random-variable-with-constant
     # Implementation with Monte Carlo Sampling:

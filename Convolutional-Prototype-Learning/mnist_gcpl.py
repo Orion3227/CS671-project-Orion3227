@@ -64,7 +64,7 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
         #eval_x = [t[0] for t in eval_points]
         #eval_y = [t[1] for t in eval_points]
     #plt.scatter(eval_x, eval_y)
-    plt.savefig('myfig')
+    plt.savefig('final_distribution_plot')
     return [true_count / test_num, per_same_cats]
 
 # initialize the prototype with the mean vector (on the train dataset) of the corresponding class
