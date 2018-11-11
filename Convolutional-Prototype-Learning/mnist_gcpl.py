@@ -11,6 +11,7 @@ import _pickle as pickle
 import pdb
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import distribution_distances
 #import cPickle as pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -67,6 +68,11 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
     plt.savefig('final_distribution_plot')
     return [true_count / test_num, per_same_cats]
 
+def compute_overlap(eval_dots_perclass):
+    overlap_matrix = np.zeros((eval_dots_perclass.shape[1]))
+
+    return overlap_matrix
+
 # initialize the prototype with the mean vector (on the train dataset) of the corresponding class
 def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labels_placeholder, train_x, train_y):
     train_num = train_y.shape[0]
@@ -112,6 +118,7 @@ def run_training():
   
     sess = tf.Session()
     load_saver = tf.train.Saver()
+    os.makedirs(FLAGS.log_dir, exist_ok=True)
     file_list = os.listdir(FLAGS.log_dir)
     keep_last_int = 0
     last_load_file_name = ''
@@ -181,10 +188,13 @@ def run_training():
 
             time2 = time.time()
             print ('time for this epoch: {:.3f} minutes'.format((time2-time1)/60.0))
+
+            break # For testing only the first episode
         
     #pdb.set_trace() 
     # test the framework with the test data
     test_score, eval_dots_perclass = do_eval(sess, eval_correct, images, labels, test_x, test_y, features) 
+    compute_overlap(eval_dots_perclass)
     # eval_dots_perclass
     # len(eval_dots_perclass) : 10 [num_categories=10]
     # eval_dots_perclass[0] : dots of category 0
