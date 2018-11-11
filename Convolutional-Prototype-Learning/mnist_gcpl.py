@@ -10,10 +10,13 @@ import os
 import _pickle as pickle
 import pdb
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 #import cPickle as pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 FLAGS = None
+
+
 
 # compute accuracy on the test dataset
 def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
@@ -29,13 +32,40 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
         batch_x_reshp = np.reshape(batch_x, (batch_size, 1, 28, 28))
         true_count += sess.run(eval_correct, feed_dict={images:batch_x_reshp, labels:batch_y})
         features_eval = sess.run(features, feed_dict={images:batch_x_reshp, labels:batch_y})
-        eval_points += list(features_eval)
+        #fe_y = [[fe[0], fe[1], batch_y[i]] for i, fe in enumerate(features_eval)]
+        fe_y = []
+        for i, fe in enumerate(features_eval):
+            fe_y.append([fe[0], fe[1], batch_y[i]])
+        eval_points += fe_y
+        #eval_points += list(features_eval)
     
-    eval_x = [t[0] for t in eval_points]
-    eval_y = [t[1] for t in eval_points]
-    plt.scatter(eval_x, eval_y)
+    num_categories = 10
+    #colors = cm.rainbow(np.linspace(0, 1, num_categories))
+    if os.path.isfile('color.pickle'):
+        with open('color.pickle', 'rb') as handle:
+            colors = pickle.load(handle)
+    else:
+        with open('color.pickle', 'wb') as handle:
+            colors = cm.rainbow(np.linspace(0, 1, num_categories))
+            pickle.dump(colors, handle)
+
+    per_same_cats = []
+    for i in range(num_categories):
+        same_cats_x = []
+        same_cats_y = []
+        for e in eval_points:
+            if e[2] == i:
+                same_cats_x.append([e[0]])
+                same_cats_y.append([e[1]])
+        same_cats = list(zip(same_cats_x, same_cats_y))
+        per_same_cats.append(same_cats)
+        plt.scatter(same_cats_x, same_cats_y, color=colors[i]) 
+        
+        #eval_x = [t[0] for t in eval_points]
+        #eval_y = [t[1] for t in eval_points]
+    #plt.scatter(eval_x, eval_y)
     plt.savefig('myfig')
-    return true_count / test_num
+    return [true_count / test_num, per_same_cats]
 
 # initialize the prototype with the mean vector (on the train dataset) of the corresponding class
 def compute_centers(sess, add_op, count_op, average_op, images_placeholder, labels_placeholder, train_x, train_y):
@@ -82,7 +112,16 @@ def run_training():
   
     sess = tf.Session()
     load_saver = tf.train.Saver()
-    load_file = os.path.join(FLAGS.log_dir, 'model.ckpt-22')
+    file_list = os.listdir(FLAGS.log_dir)
+    keep_last_int = 0
+    last_load_file_name = ''
+    for name in file_list:
+        if len(name.split('.')) < 2:
+            continue
+        if keep_last_int < int(name.split('.')[1].split('-')[1]):
+            keep_last_int = int(name.split('.')[1].split('-')[1])
+            last_load_file_name = '.'.join(name.split('.')[:2])
+    load_file = os.path.join(FLAGS.log_dir, last_load_file_name)
     if os.path.isfile(load_file+".meta"):
         load_saver.restore(sess, load_file)
     else:
@@ -145,8 +184,13 @@ def run_training():
         
     #pdb.set_trace() 
     # test the framework with the test data
-    test_score = do_eval(sess, eval_correct, images, labels, test_x, test_y, features)
+    test_score, eval_dots_perclass = do_eval(sess, eval_correct, images, labels, test_x, test_y, features) 
+    # eval_dots_perclass
+    # len(eval_dots_perclass) : 10 [num_categories=10]
+    # eval_dots_perclass[0] : dots of category 0
+    # eval_dots_perclass[0][0] : (x, y) of index 0 of category 0
     print ('accuracy on the test dataset: {:.3f}%'.format(test_score*100))
+    pdb.set_trace()
 
     sess.close()
 
