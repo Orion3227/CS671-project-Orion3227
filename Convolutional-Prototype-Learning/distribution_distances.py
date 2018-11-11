@@ -16,10 +16,11 @@ class GaussianDistribution:
            self.set_data(data)
 
     def set_data(self, data):
+        data = np.array(data)
         if data.ndim == 1:
             data = np.reshape(data, (data.shape[0], 1))
         elif data.ndim != 2:
-            raise ValueError("List has to be either one or two dimensional")
+            raise ValueError("List has to be either one or two dimensional, found {}".format(data.ndim))
 
         self.mu = np.mean(data, axis=0)
         self.std = np.cov(data.T)

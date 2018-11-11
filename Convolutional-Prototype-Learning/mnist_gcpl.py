@@ -56,21 +56,34 @@ def do_eval(sess, eval_correct, images, labels, test_x, test_y, features):
         same_cats_y = []
         for e in eval_points:
             if e[2] == i:
-                same_cats_x.append([e[0]])
-                same_cats_y.append([e[1]])
+                same_cats_x.append(e[0])
+                same_cats_y.append(e[1])
         same_cats = list(zip(same_cats_x, same_cats_y))
         per_same_cats.append(same_cats)
         plt.scatter(same_cats_x, same_cats_y, color=colors[i]) 
         
-        #eval_x = [t[0] for t in eval_points]
-        #eval_y = [t[1] for t in eval_points]
-    #plt.scatter(eval_x, eval_y)
+    plt.legend(["Class: {}".format(i) for i in range(num_categories)])
     plt.savefig('final_distribution_plot')
     return [true_count / test_num, per_same_cats]
 
 def compute_overlap(eval_dots_perclass):
-    overlap_matrix = np.zeros((eval_dots_perclass.shape[1]))
+    num_classes = len(eval_dots_perclass)
+    if num_classes < 2:
+        return np.array([0])
 
+    distributions = [distribution_distances.GaussianDistribution(data=eval_dots_perclass[i])
+                     for i in range(num_classes)]
+    
+    overlap_matrix = np.zeros((num_classes, num_classes))
+    for idx_1, dist_1 in enumerate(distributions):
+        for idx_2, dist_2 in enumerate(distributions):
+            if dist_1 is dist_2:
+                continue
+
+            overlap_matrix[idx_1, idx_2] = distribution_distances.JensenShannonDivergenceMultiVarianteGaussians(
+                dist_1, dist_2)
+
+    print(overlap_matrix)
     return overlap_matrix
 
 # initialize the prototype with the mean vector (on the train dataset) of the corresponding class
@@ -200,7 +213,7 @@ def run_training():
     # eval_dots_perclass[0] : dots of category 0
     # eval_dots_perclass[0][0] : (x, y) of index 0 of category 0
     print ('accuracy on the test dataset: {:.3f}%'.format(test_score*100))
-    pdb.set_trace()
+    # pdb.set_trace()
 
     sess.close()
 
