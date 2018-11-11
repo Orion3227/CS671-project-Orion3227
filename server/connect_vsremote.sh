@@ -1,1 +1,1 @@
-ssh -R 52698:localhost:52698 -i cs671_key.pem ubuntu@143.248.140.159 -p 0922  
+ssh ubuntu@143.248.140.159 -p 0922 -R 52698:127.0.0.1:52698 -i cs671_key.pem
